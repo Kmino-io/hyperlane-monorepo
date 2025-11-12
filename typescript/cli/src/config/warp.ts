@@ -4,6 +4,7 @@ import { stringify as yamlStringify } from 'yaml';
 import {
   ChainMap,
   ChainTechnicalStack,
+  CustomContractMetadata,
   DeployedOwnableConfig,
   HypERC20Deployer,
   HypTokenRouterConfig,
@@ -17,8 +18,10 @@ import {
   WarpRouteDeployConfigMailboxRequired,
   WarpRouteDeployConfigMailboxRequiredSchema,
   WarpRouteDeployConfigSchema,
+  discoverCustomContracts,
   isMovableCollateralTokenConfig,
   resolveRouterMapConfig,
+  solidityTypeToHint,
 } from '@hyperlane-xyz/sdk';
 import { Address, assert, objMap, promiseObjAll } from '@hyperlane-xyz/utils';
 
@@ -40,7 +43,7 @@ import { useProvidedWarpRouteIdOrPrompt } from '../utils/warp.js';
 
 import { createAdvancedIsmConfig } from './ism.js';
 
-const TYPE_DESCRIPTIONS: Record<TokenType, string> = {
+const TYPE_DESCRIPTIONS: Partial<Record<TokenType, string>> = {
   [TokenType.synthetic]: 'A new ERC20 with remote transfer functionality',
   [TokenType.syntheticRebase]: `A rebasing ERC20 with remote transfer functionality. Must be paired with ${TokenType.collateralVaultRebase}`,
   [TokenType.collateral]:
@@ -185,8 +188,21 @@ export async function createWarpRouteDeployConfig({
     requiresConfirmation: !context.skipConfirmation,
   });
 
+  // Discover custom contracts
+  const customContracts = await discoverCustomContracts();
+
+  // Add custom contracts to type choices
+  const customChoices = customContracts.map((c: CustomContractMetadata) => ({
+    name: c.name as any,
+    value: c.name,
+    description:
+      c.contractDocs.notice ||
+      c.contractDocs.title ||
+      `Custom contract: ${c.name}`,
+  }));
+
   const result: WarpRouteDeployConfig = {};
-  let typeChoices = TYPE_CHOICES;
+  let typeChoices = [...TYPE_CHOICES, ...customChoices];
   for (const chain of warpChains) {
     logBlue(`${chain}: Configuring warp route...`);
     const owner = await detectAndConfirmOrPrompt(
@@ -319,7 +335,105 @@ export async function createWarpRouteDeployConfig({
         };
         break;
       default:
-        throw new Error(`Token type ${type} is not supported`);
+        // Handle custom contract types
+        const customContract = customContracts.find(
+          (c: CustomContractMetadata) => c.name === type,
+        );
+
+        if (customContract) {
+          const customConfig: any = {
+            type,
+            owner,
+            proxyAdmin,
+            interchainSecurityModule,
+          };
+
+          // Prompt for token metadata (required for custom contracts)
+          customConfig.originTokenName = await input({
+            message: 'Enter the origin token name:',
+          });
+
+          customConfig.originTokenSymbol = await input({
+            message: 'Enter the origin token symbol:',
+          });
+
+          const decimalsInput = await input({
+            message: 'Enter the origin token decimals:',
+            default: '18',
+          });
+          customConfig.originTokenDecimals = parseInt(decimalsInput, 10);
+
+          // Prompt for initial supply
+          const initialSupplyInput = await input({
+            message: 'Enter the initial token supply (in wei):',
+            default: '0',
+          });
+          customConfig.totalSupply = initialSupplyInput;
+
+          // Prompt for constructor parameters (excluding standard ones)
+          const standardParams = new Set([
+            '_decimals',
+            '_mailbox',
+            'decimals',
+            'mailbox',
+          ]);
+          for (const param of customContract.constructorParams) {
+            if (!standardParams.has(param.name)) {
+              const configKey = param.name.startsWith('_')
+                ? param.name.slice(1)
+                : param.name;
+
+              const typeHint = solidityTypeToHint(param.type);
+              const description = param.description || param.name;
+
+              customConfig[configKey] = await input({
+                message: `${description} (${typeHint}):`,
+              });
+            }
+          }
+
+          // Prompt for initialize parameters (excluding standard ones)
+          const standardInitParams = new Set([
+            '_totalSupply',
+            '_initialSupply',
+            '_name',
+            '_symbol',
+            '_hook',
+            '_interchainSecurityModule',
+            '_ism',
+            '_owner',
+            'totalSupply',
+            'initialSupply',
+            'name',
+            'symbol',
+            'hook',
+            'interchainSecurityModule',
+            'ism',
+            'owner',
+          ]);
+
+          for (const param of customContract.initializeParams) {
+            if (!standardInitParams.has(param.name)) {
+              const configKey = param.name.startsWith('_')
+                ? param.name.slice(1)
+                : param.name;
+
+              // Skip if already added from constructor
+              if (!customConfig[configKey]) {
+                const typeHint = solidityTypeToHint(param.type);
+                const description = param.description || param.name;
+
+                customConfig[configKey] = await input({
+                  message: `${description} (${typeHint}):`,
+                });
+              }
+            }
+          }
+
+          result[chain] = customConfig;
+        } else {
+          throw new Error(`Token type ${type} is not supported`);
+        }
     }
   }
 

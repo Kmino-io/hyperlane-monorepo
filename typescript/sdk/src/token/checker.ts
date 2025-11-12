@@ -79,7 +79,7 @@ export class HypERC20Checker extends ProxiedRouterChecker<
 
       if (expectedConfig.type === TokenType.XERC20Lockbox) {
         const lockbox = IXERC20Lockbox__factory.connect(
-          expectedConfig.token,
+          expectedConfig.token as string,
           provider,
         );
         collateralToken = ERC20__factory.connect(

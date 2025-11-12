@@ -8579,6 +8579,7 @@ __metadata:
     "@safe-global/safe-deployments": "npm:1.37.47"
     "@solana/spl-token": "npm:^0.4.9"
     "@solana/web3.js": "npm:^1.98.4"
+    "@solidity-parser/parser": "npm:^0.20.2"
     "@types/chai-as-promised": "npm:^8"
     "@types/mocha": "npm:^10.0.1"
     "@types/node": "npm:^18.14.5"
@@ -15546,6 +15547,13 @@ __metadata:
   version: 0.19.0
   resolution: "@solidity-parser/parser@npm:0.19.0"
   checksum: 10/2136708ecc988b534efcf836e95f4f02a1452ab0c026438014c35ce31b26dc011cc8c512d502fc7bcb968f850ab7e524838292bc36cad6a144fedb4c29685587
+  languageName: node
+  linkType: hard
+
+"@solidity-parser/parser@npm:^0.20.2":
+  version: 0.20.2
+  resolution: "@solidity-parser/parser@npm:0.20.2"
+  checksum: 10/405009cd712cc410df60e45510ddd2ca615d208b152903be71cef4b9440720287ffd3792f88a92eb0de375c2ea66b442e84c843cb810612d6b6e45fd51a2b49b
   languageName: node
   linkType: hard
 

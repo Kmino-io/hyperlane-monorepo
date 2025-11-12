@@ -1,4 +1,6 @@
-import { constants } from 'ethers';
+import { ContractFactory, constants } from 'ethers';
+import { promises as fs } from 'fs';
+import path from 'path';
 
 import {
   ERC20__factory,
@@ -39,7 +41,7 @@ import { resolveRouterMapConfig } from '../router/types.js';
 import { ChainMap, ChainName } from '../types.js';
 
 import { TokenMetadataMap } from './TokenMetadataMap.js';
-import { TokenType, gasOverhead } from './config.js';
+import { TokenType, gasOverhead, isCustomTokenType } from './config.js';
 import {
   HypERC20Factories,
   HypERC20contracts,
@@ -51,6 +53,12 @@ import {
   hypERC721contracts,
   hypERC721factories,
 } from './contracts.js';
+import {
+  CustomContractMetadata,
+  ParamInfo,
+  discoverCustomContracts,
+} from './customContracts.js';
+import { getCustomContractFromType } from './customSchemas.js';
 import {
   CctpTokenConfig,
   HypTokenConfig,
@@ -128,6 +136,9 @@ export const TOKEN_INITIALIZE_SIGNATURE = (
 abstract class TokenDeployer<
   Factories extends TokenFactories,
 > extends GasRouterDeployer<HypTokenRouterConfig, Factories> {
+  protected customContracts: CustomContractMetadata[] = [];
+  protected customFactories: Record<string, ContractFactory> = {};
+
   constructor(
     multiProvider: MultiProvider,
     factories: Factories,
@@ -144,11 +155,206 @@ abstract class TokenDeployer<
     }); // factories not used in deploy
   }
 
+  /**
+   * Load custom contracts from the custom directory
+   * Should be called before deployment
+   */
+  async loadCustomContracts(customDir?: string): Promise<void> {
+    this.customContracts = await discoverCustomContracts(customDir);
+    this.customFactories = {};
+
+    await Promise.all(
+      this.customContracts.map((metadata) =>
+        this.loadCustomContractFactory(metadata),
+      ),
+    );
+  }
+
+  protected async loadCustomContractFactory(
+    metadata: CustomContractMetadata,
+  ): Promise<void> {
+    const artifactPath = this.resolveCustomArtifactPath(metadata);
+
+    if (!artifactPath) {
+      this.logger.warn(
+        `Unable to determine artifact path for custom contract ${metadata.name} at ${metadata.filePath}`,
+      );
+      return;
+    }
+
+    try {
+      const artifactContents = await fs.readFile(artifactPath, 'utf8');
+      const artifact = JSON.parse(artifactContents);
+
+      if (!artifact?.bytecode || artifact.bytecode === '0x') {
+        this.logger.warn(
+          `Artifact for custom contract ${metadata.name} at ${artifactPath} does not contain deployable bytecode`,
+        );
+        return;
+      }
+
+      this.customFactories[metadata.name] = new ContractFactory(
+        artifact.abi,
+        artifact.bytecode,
+      );
+    } catch (err: any) {
+      if (err?.code === 'ENOENT') {
+        this.logger.warn(
+          `Custom contract ${metadata.name} artifact not found at ${artifactPath}. Run 'pnpm --filter solidity hardhat compile' to generate it.`,
+        );
+      } else {
+        this.logger.warn(
+          { err, artifactPath },
+          `Failed to load artifact for custom contract ${metadata.name}`,
+        );
+      }
+    }
+  }
+
+  protected resolveCustomArtifactPath(
+    metadata: CustomContractMetadata,
+  ): string | null {
+    const contractsDir = this.findAncestorDir(metadata.filePath, 'contracts');
+    if (!contractsDir) return null;
+
+    const solidityDir = path.dirname(contractsDir);
+    const relativePath = path.relative(contractsDir, metadata.filePath);
+
+    return path.join(
+      solidityDir,
+      'artifacts',
+      'contracts',
+      relativePath,
+      `${metadata.name}.json`,
+    );
+  }
+
+  protected findAncestorDir(filePath: string, dirName: string): string | null {
+    let current = path.dirname(filePath);
+    const root = path.parse(current).root;
+
+    while (current && current !== root) {
+      if (path.basename(current) === dirName) {
+        return current;
+      }
+      current = path.dirname(current);
+    }
+
+    if (path.basename(current) === dirName) {
+      return current;
+    }
+
+    return null;
+  }
+
+  override async deployContractFromFactory<F extends ContractFactory>(
+    chain: ChainName,
+    factory: F,
+    contractName: string,
+    constructorArgs: Parameters<F['deploy']>,
+    initializeArgs?: Parameters<Awaited<ReturnType<F['deploy']>>['initialize']>,
+    shouldRecover = true,
+    implementationAddress?: Address,
+  ): Promise<ReturnType<F['deploy']>> {
+    let resolvedFactory = factory;
+
+    if (!resolvedFactory) {
+      const customFactory = this.customFactories[contractName];
+      if (customFactory) {
+        resolvedFactory = customFactory as unknown as F;
+      } else if (
+        this.customContracts.some((metadata) => metadata.name === contractName)
+      ) {
+        throw new Error(
+          `Custom contract ${contractName} is missing a compiled artifact. Run 'yarn --cwd solidity hardhat compile'`,
+        );
+      }
+    }
+
+    return super.deployContractFromFactory(
+      chain,
+      resolvedFactory,
+      contractName,
+      constructorArgs,
+      initializeArgs,
+      shouldRecover,
+      implementationAddress,
+    );
+  }
+
+  /**
+   * Build arguments array from parameter metadata and config
+   */
+  protected buildArgsFromParams(params: ParamInfo[], config: any): any[] {
+    return params.map((param) => {
+      // Remove leading underscore to get config key
+      let configKey = param.name.startsWith('_')
+        ? param.name.slice(1)
+        : param.name;
+
+      // Map origin token metadata fields for custom contracts
+      const originFieldMap: Record<string, string> = {
+        name: 'originTokenName',
+        symbol: 'originTokenSymbol',
+        decimals: 'originTokenDecimals',
+      };
+
+      // Check if this is a metadata field and origin version exists
+      if (originFieldMap[configKey] && config[originFieldMap[configKey]]) {
+        configKey = originFieldMap[configKey];
+      }
+
+      let value = config[configKey];
+
+      // For ISM, if it's an object (IsmConfig), convert to address
+      // This will be deployed and set later, so use zero address for now
+      if (
+        configKey === 'interchainSecurityModule' &&
+        typeof value === 'object'
+      ) {
+        value = constants.AddressZero;
+      }
+
+      if (value === undefined) {
+        throw new Error(
+          `Missing required parameter: ${param.name} (${param.type})`,
+        );
+      }
+
+      return value;
+    });
+  }
+
   async constructorArgs(
     _: ChainName,
     config: HypTokenRouterConfig,
   ): Promise<any> {
-    // TODO: derive as specified in https://github.com/hyperlane-xyz/hyperlane-monorepo/issues/5296
+    // Handle custom contracts
+    if (isCustomTokenType(config.type)) {
+      const metadata = getCustomContractFromType(
+        this.customContracts,
+        config.type,
+      );
+      if (!metadata) {
+        throw new Error(
+          `Custom contract metadata not found for type: ${config.type}`,
+        );
+      }
+
+      // Inject standard constructor parameters
+      const configWithDefaults = {
+        ...config,
+        decimals: config.decimals ?? (config as any).originTokenDecimals ?? 18,
+        mailbox: config.mailbox,
+      };
+
+      return this.buildArgsFromParams(
+        metadata.constructorParams,
+        configWithDefaults,
+      );
+    }
+
+    // Handle standard token types
     const scale = config.scale ?? 1;
 
     if (isCollateralTokenConfig(config) || isXERC20TokenConfig(config)) {
@@ -173,7 +379,7 @@ abstract class TokenDeployer<
     } else if (isOpL1TokenConfig(config)) {
       return [config.mailbox, config.portal];
     } else if (isSyntheticTokenConfig(config)) {
-      assert(config.decimals, 'decimals is undefined for config'); // decimals must be defined by this point
+      assert(config.decimals, 'decimals is undefined for config');
       return [config.decimals, scale, config.mailbox];
     } else if (isSyntheticRebaseTokenConfig(config)) {
       const collateralDomain = this.multiProvider.getDomainId(
@@ -219,6 +425,35 @@ abstract class TokenDeployer<
     chain: ChainName,
     config: HypTokenRouterConfig,
   ): Promise<any> {
+    // Handle custom contracts
+    if (isCustomTokenType(config.type)) {
+      const metadata = getCustomContractFromType(
+        this.customContracts,
+        config.type,
+      );
+      if (!metadata) {
+        throw new Error(
+          `Custom contract metadata not found for type: ${config.type}`,
+        );
+      }
+
+      // Inject standard parameters if not already present
+      const signer = await this.multiProvider.getSigner(chain).getAddress();
+      const configWithDefaults = {
+        ...config,
+        hook: config.hook ?? constants.AddressZero,
+        interchainSecurityModule:
+          config.interchainSecurityModule ?? constants.AddressZero,
+        owner: signer, // Use signer as owner, will be transferred later
+      };
+
+      return this.buildArgsFromParams(
+        metadata.initializeParams,
+        configWithDefaults,
+      );
+    }
+
+    // Handle standard token types
     const signer = await this.multiProvider.getSigner(chain).getAddress();
     const defaultArgs = [
       config.hook ?? constants.AddressZero,
@@ -705,20 +940,36 @@ export class HypERC20Deployer extends TokenDeployer<HypERC20Factories> {
   }
 
   router(contracts: HyperlaneContracts<HypERC20Factories>): TokenRouter {
+    // Check standard factories first
     for (const key of objKeys(hypERC20factories)) {
       if (contracts[key]) {
         return contracts[key];
+      }
+    }
+    // Check for custom contracts (any key not in standard factories)
+    for (const key of Object.keys(contracts)) {
+      const typedKey = key as keyof typeof contracts;
+      if (contracts[typedKey]) {
+        return contracts[typedKey] as TokenRouter;
       }
     }
     throw new Error('No matching contract found');
   }
 
   routerContractKey(config: HypTokenRouterConfig): keyof HypERC20Factories {
+    // Custom contracts are not in hypERC20factories
+    if (isCustomTokenType(config.type)) {
+      return config.type as any;
+    }
     assert(config.type in hypERC20factories, 'Invalid ERC20 token type');
     return config.type as keyof HypERC20Factories;
   }
 
   routerContractName(config: HypTokenRouterConfig): string {
+    // For custom contracts, the type name IS the contract name
+    if (isCustomTokenType(config.type)) {
+      return config.type;
+    }
     // Handle CCTP version-specific contract names
     if (isCctpTokenConfig(config)) {
       return `TokenBridgeCctp${config.cctpVersion}`;

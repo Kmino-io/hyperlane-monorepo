@@ -225,11 +225,11 @@ describe('hyperlane warp apply owner update tests', async function () {
         `Config on chain ${CHAIN_NAME_2} must be a ${TokenType.native}`,
       );
       expect(
-        updatedWarpDeployConfig.anvil2.allowedRebalancers?.length,
+        (updatedWarpDeployConfig.anvil2 as any).allowedRebalancers?.length,
       ).to.equal(1);
 
       const [currentRebalancer] =
-        updatedWarpDeployConfig.anvil2.allowedRebalancers ?? [];
+        (updatedWarpDeployConfig.anvil2 as any).allowedRebalancers ?? [];
       expect(currentRebalancer).to.equal(rebalancer);
     }
   });
@@ -287,15 +287,13 @@ describe('hyperlane warp apply owner update tests', async function () {
           `Config on chain ${CHAIN_NAME_2} must be a ${TokenType.native}`,
         );
         expect(
-          (updatedWarpDeployConfig.anvil2.allowedRebalancingBridges ?? {})[
-            chain3DomainId
-          ].length,
+          ((updatedWarpDeployConfig.anvil2 as any).allowedRebalancingBridges ??
+            {})[chain3DomainId].length,
         ).to.equal(1);
 
         const [currentRebalancer] =
-          (updatedWarpDeployConfig.anvil2.allowedRebalancingBridges ?? {})[
-            chain3DomainId
-          ] ?? [];
+          ((updatedWarpDeployConfig.anvil2 as any).allowedRebalancingBridges ??
+            {})[chain3DomainId] ?? [];
         expect(currentRebalancer.bridge).to.equal(rebalancer);
       }
     });

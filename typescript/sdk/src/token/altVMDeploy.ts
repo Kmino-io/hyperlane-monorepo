@@ -17,8 +17,12 @@ import {
 } from '../providers/ProviderType.js';
 import { ChainMap, ChainName } from '../types.js';
 
-import { TokenType, gasOverhead } from './config.js';
-import { WarpRouteDeployConfigMailboxRequired } from './types.js';
+import { gasOverhead } from './config.js';
+import {
+  WarpRouteDeployConfigMailboxRequired,
+  isCollateralTokenConfig,
+  isSyntheticTokenConfig,
+} from './types.js';
 
 export class AltVMDeployer<PT extends ProtocolType> {
   protected logger: Logger;
@@ -56,30 +60,24 @@ export class AltVMDeployer<PT extends ProtocolType> {
 
       this.logger.info(`Deploying ${config.type} token to chain ${chain}`);
 
-      switch (config.type) {
-        case TokenType.collateral: {
-          result[chain] = await this.deployCollateralToken(
-            chain,
-            config.mailbox,
-            config.token,
-          );
-          break;
-        }
-        case TokenType.synthetic: {
-          result[chain] = await this.deploySyntheticToken(
-            chain,
-            config.mailbox,
-            config.name,
-            config.symbol,
-            config.decimals,
-          );
-          break;
-        }
-        default: {
-          throw new Error(
-            `Token type ${config.type} not supported on chain ${chain}`,
-          );
-        }
+      if (isCollateralTokenConfig(config)) {
+        result[chain] = await this.deployCollateralToken(
+          chain,
+          config.mailbox,
+          config.token,
+        );
+      } else if (isSyntheticTokenConfig(config)) {
+        result[chain] = await this.deploySyntheticToken(
+          chain,
+          config.mailbox,
+          config.name,
+          config.symbol,
+          config.decimals,
+        );
+      } else {
+        throw new Error(
+          `Token type ${config.type} not supported on chain ${chain}`,
+        );
       }
 
       if (

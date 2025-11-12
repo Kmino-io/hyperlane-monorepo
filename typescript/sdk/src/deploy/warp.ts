@@ -127,6 +127,9 @@ export async function executeWarpDeploy(
           ? new HypERC721Deployer(multiProvider)
           : new HypERC20Deployer(multiProvider); // TODO: replace with EvmERC20WarpModule
 
+        // Load custom contracts before deployment
+        await deployer.loadCustomContracts();
+
         const evmContracts = await deployer.deploy(protocolSpecificConfig);
         deployedContracts = {
           ...deployedContracts,
@@ -499,9 +502,30 @@ export async function enrollCrossChainRouters(
   return updateTransactions;
 }
 
+/**
+ * Used in custom HypERC20 deployments to isolate the actual router contract
+ * from helper artifacts (proxy admins, timelocks, etc.) when factory keys
+ * no longer match the default registry.
+ */
+function isRouterContract(
+  key: string,
+  contract: HyperlaneContracts<HypERC20Factories>[keyof HypERC20Factories],
+): contract is HyperlaneContracts<HypERC20Factories>[keyof HypERC20Factories] {
+  if (!contract || typeof (contract as any).address !== 'string') return false;
+  return key !== 'proxyAdmin' && key !== 'timelockController';
+}
+
 function getRouter(contracts: HyperlaneContracts<HypERC20Factories>) {
   for (const key of objKeys(hypERC20factories)) {
     if (contracts[key]) return contracts[key];
   }
+
+  const routerEntry = Object.entries(contracts).find(([key, contract]) =>
+    isRouterContract(key, contract as any),
+  );
+  if (routerEntry) {
+    return routerEntry[1];
+  }
+
   throw new Error('No matching contract found.');
 }

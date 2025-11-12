@@ -19,6 +19,21 @@ export enum TokenType {
   nativeScaled = 'nativeScaled',
 }
 
+/**
+ * Checks if a token type string represents a custom contract
+ * Custom contracts are any types not in the standard TokenType enum
+ */
+export function isCustomTokenType(type: string): boolean {
+  return !isStandardTokenType(type);
+}
+
+/**
+ * Type guard for standard (non-custom) token types
+ */
+export function isStandardTokenType(type: string): type is TokenType {
+  return Object.values(TokenType).includes(type as TokenType);
+}
+
 // A token is defined movable collateral if its solidity contract implementation
 // is a subclass of MovableCollateralRouter
 const isMovableCollateralTokenTypeMap = {
@@ -55,7 +70,12 @@ export function isMovableCollateralTokenType(type: TokenType): boolean {
   return !!isMovableCollateralTokenTypeMap[type];
 }
 
-export const gasOverhead = (tokenType: TokenType): number => {
+export const gasOverhead = (tokenType: TokenType | string): number => {
+  // Custom contracts use default overhead
+  if (isCustomTokenType(tokenType)) {
+    return 68_000;
+  }
+
   switch (tokenType) {
     case TokenType.synthetic:
       return 64_000;
