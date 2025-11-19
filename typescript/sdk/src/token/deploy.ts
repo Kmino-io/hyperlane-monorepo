@@ -139,6 +139,8 @@ abstract class TokenDeployer<
   protected customContracts: CustomContractMetadata[] = [];
   protected customFactories: Record<string, ContractFactory> = {};
 
+  abstract routerContractName(config: HypTokenRouterConfig): string;
+
   constructor(
     multiProvider: MultiProvider,
     factories: Factories,
@@ -418,6 +420,24 @@ abstract class TokenDeployer<
   }
 
   initializeFnSignature(name: string): string {
+    // For custom contracts, get the signature from the factory's ABI
+    const customFactory = this.customFactories[name];
+    if (customFactory) {
+      // In ethers v5, interface.functions is an object keyed by function signature
+      // Find all initialize function signatures
+      const initializeSignatures = Object.keys(
+        customFactory.interface.functions,
+      ).filter((signature) => signature.startsWith('initialize('));
+
+      if (initializeSignatures.length > 0) {
+        // If there are multiple initialize functions, use the one with the most parameters
+        // (which should be our custom initialize function with additional parameters)
+        const customSignature = initializeSignatures.reduce((prev, curr) =>
+          curr.split(',').length > prev.split(',').length ? curr : prev,
+        );
+        return customSignature;
+      }
+    }
     return TOKEN_INITIALIZE_SIGNATURE(name as any);
   }
 
