@@ -299,22 +299,39 @@ export type HypTokenRouterVirtualConfig = z.infer<
   typeof HypTokenRouterVirtualConfigSchema
 >;
 
+// Schema for custom contracts (any type not in TokenType enum)
+const CustomTokenConfigSchema = TokenMetadataSchema.partial()
+  .extend({
+    type: z
+      .string()
+      .refine((val) => !Object.values(TokenType).includes(val as TokenType), {
+        message:
+          'Custom contract type must not conflict with standard TokenType',
+      }),
+    // Allow any additional fields for custom parameters
+  })
+  .passthrough();
+
 /**
  * @remarks
  * The discriminatedUnion is basically a switch statement for zod schemas
  * It uses the 'type' key to pick from the array of schemas to validate
+ * Custom contracts (any type not in TokenType enum) are also supported
  */
-export const HypTokenConfigSchema = z.discriminatedUnion('type', [
-  NativeTokenConfigSchema,
-  OpL2TokenConfigSchema,
-  OpL1TokenConfigSchema,
-  CollateralTokenConfigSchema,
-  XERC20TokenConfigSchema,
-  SyntheticTokenConfigSchema,
-  SyntheticRebaseTokenConfigSchema,
-  CctpTokenConfigSchema,
-  EverclearCollateralTokenConfigSchema,
-  EverclearEthBridgeTokenConfigSchema,
+export const HypTokenConfigSchema = z.union([
+  z.discriminatedUnion('type', [
+    NativeTokenConfigSchema,
+    OpL2TokenConfigSchema,
+    OpL1TokenConfigSchema,
+    CollateralTokenConfigSchema,
+    XERC20TokenConfigSchema,
+    SyntheticTokenConfigSchema,
+    SyntheticRebaseTokenConfigSchema,
+    CctpTokenConfigSchema,
+    EverclearCollateralTokenConfigSchema,
+    EverclearEthBridgeTokenConfigSchema,
+  ]),
+  CustomTokenConfigSchema,
 ]);
 export type HypTokenConfig = z.infer<typeof HypTokenConfigSchema>;
 

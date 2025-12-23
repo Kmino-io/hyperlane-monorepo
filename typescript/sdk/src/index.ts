@@ -684,7 +684,25 @@ export {
 } from './token/adapters/serialization.js';
 export { HypERC20App } from './token/app.js';
 export { HypERC20Checker } from './token/checker.js';
-export { TokenType } from './token/config.js';
+export {
+  TokenType,
+  isCustomTokenType,
+  isStandardTokenType,
+} from './token/config.js';
+export {
+  CustomContractMetadata,
+  ParamInfo,
+  discoverCustomContracts,
+  parseCustomContract,
+  solidityTypeToHint,
+} from './token/customContracts.js';
+export {
+  generateCustomContractSchema,
+  generateCustomTokenConfigSchema,
+  createCustomContractsUnion,
+  getCustomContractFromType,
+  solidityTypeToZod,
+} from './token/customSchemas.js';
 export {
   expandVirtualWarpDeployConfig,
   expandWarpDeployConfig,

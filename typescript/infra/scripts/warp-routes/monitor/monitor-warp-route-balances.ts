@@ -208,7 +208,8 @@ async function updateTokenMetrics(
       return;
     }
 
-    const extraLockboxes = currentTokenDeployConfig.xERC20?.extraBridges ?? [];
+    const extraLockboxes =
+      (currentTokenDeployConfig as any).xERC20?.extraBridges ?? [];
 
     for (const lockbox of extraLockboxes) {
       promises.push(

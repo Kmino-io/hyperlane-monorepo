@@ -27,10 +27,10 @@ import {
  * Supported token types in provider-sdk.
  * Alt-VM chains currently support collateral, synthetic, and native tokens.
  */
-const SUPPORTED_TOKEN_TYPES = new Set<TokenType>([
-  TokenType.synthetic,
-  TokenType.collateral,
-  TokenType.native,
+const SUPPORTED_TOKEN_TYPES = new Set<ProviderTokenType>([
+  ProviderTokenType.synthetic,
+  ProviderTokenType.collateral,
+  ProviderTokenType.native,
 ]);
 
 /**
@@ -76,7 +76,7 @@ export function validateWarpConfigForAltVM(
   chain: string,
 ): ProviderWarpConfig {
   // Check if token type is supported
-  if (!SUPPORTED_TOKEN_TYPES.has(config.type)) {
+  if (!SUPPORTED_TOKEN_TYPES.has(config.type as ProviderTokenType)) {
     const supportedTypes = Array.from(SUPPORTED_TOKEN_TYPES).join(', ');
     const errorMsg =
       `Unsupported token type '${config.type}' for Alt-VM chain '${chain}'.\n` +

@@ -95,10 +95,17 @@ export function proxyConstructorArgs<C extends ethers.Contract>(
   initializeFnSignature = 'initialize',
 ): [string, string, string] {
   const initData = initializeArgs
-    ? implementation.interface.encodeFunctionData(
-        initializeFnSignature,
-        initializeArgs,
-      )
+    ? (() => {
+        // Use getFunction to handle both simple names and full signatures correctly
+        // This ensures we get the correct function overload when multiple exist
+        const functionFragment = implementation.interface.getFunction(
+          initializeFnSignature,
+        );
+        return implementation.interface.encodeFunctionData(
+          functionFragment,
+          initializeArgs,
+        );
+      })()
     : '0x';
   return [implementation.address, proxyAdmin, initData];
 }

@@ -207,7 +207,7 @@ export class Metrics implements IMetrics {
       }
 
       const extraLockboxes =
-        currentTokenDeployConfig.xERC20?.extraBridges ?? [];
+        (currentTokenDeployConfig as any).xERC20?.extraBridges ?? [];
 
       for (const lockbox of extraLockboxes) {
         promises.push(

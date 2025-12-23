@@ -93,7 +93,7 @@ export abstract class HyperlaneDeployer<
     protected readonly icaAddresses = {},
   ) {
     this.logger = options?.logger ?? rootLogger.child({ module: 'deployer' });
-    this.chainTimeoutMs = options?.chainTimeoutMs ?? 15 * 60 * 1000; // 15 minute timeout per chain
+    this.chainTimeoutMs = options?.chainTimeoutMs ?? 60 * 60 * 1000; // 60 minute timeout per chain
     if (Object.keys(icaAddresses).length > 0) {
       this.options.icaApp = InterchainAccount.fromAddressesMap(
         icaAddresses,
@@ -444,16 +444,16 @@ export abstract class HyperlaneDeployer<
           `Initializing ${contractName} (${contract.address}) on ${chain}...`,
         );
 
-        // Estimate gas for the initialize transaction
-        const estimatedGas = await contract
-          .connect(signer)
-          .estimateGas[
-            this.initializeFnSignature(contractName)
-          ](...initializeArgs);
+        const initSignature = this.initializeFnSignature(contractName);
+        const connectedContract = contract.connect(signer);
+
+        const estimatedGas = await connectedContract.estimateGas[initSignature](
+          ...initializeArgs,
+        );
 
         // deploy with buffer on gas limit
         const overrides = this.multiProvider.getTransactionOverrides(chain);
-        const initTx = await contract[this.initializeFnSignature(contractName)](
+        const initTx = await connectedContract[initSignature](
           ...initializeArgs,
           {
             gasLimit: addBufferToGasLimit(estimatedGas),
@@ -772,16 +772,14 @@ export abstract class HyperlaneDeployer<
     constructorArgs: Parameters<Factories[K]['deploy']>,
     initializeArgs?: Parameters<HyperlaneContracts<Factories>[K]['initialize']>,
   ): Promise<HyperlaneContracts<Factories>[K]> {
-    // Try to initialize the implementation even though it may not be necessary
     const implementation = await this.deployContractWithName(
       chain,
       contractKey,
       contractName,
       constructorArgs,
-      initializeArgs,
+      undefined,
     );
 
-    // Initialize the proxy the same way
     const contract = await this.deployProxy(
       chain,
       implementation,

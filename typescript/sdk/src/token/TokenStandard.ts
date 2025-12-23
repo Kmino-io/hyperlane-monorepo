@@ -240,11 +240,29 @@ export const TOKEN_COSMWASM_STANDARDS = [
 
 export const tokenTypeToStandard = (
   protocolType: ProtocolType,
-  tokenType: TokenType,
+  tokenType: TokenType | string,
 ) => {
+  // Handle custom contracts (any type not in TokenType enum)
+  if (
+    typeof tokenType === 'string' &&
+    !Object.values(TokenType).includes(tokenType as TokenType)
+  ) {
+    // Custom contracts are treated as synthetic for standard purposes
+    switch (protocolType) {
+      case ProtocolType.Ethereum:
+        return TokenStandard.EvmHypSynthetic;
+      case ProtocolType.CosmosNative:
+        return TokenStandard.CwHypSynthetic;
+      default:
+        throw new Error(
+          `Custom contracts not supported for protocol ${protocolType}`,
+        );
+    }
+  }
+
   switch (protocolType) {
     case ProtocolType.Ethereum: {
-      return EVM_TOKEN_TYPE_TO_STANDARD[tokenType];
+      return EVM_TOKEN_TYPE_TO_STANDARD[tokenType as TokenType];
     }
     case ProtocolType.CosmosNative: {
       if (
