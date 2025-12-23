@@ -26,6 +26,7 @@ import {
   TestRecipientDeployer,
 } from '@hyperlane-xyz/sdk';
 import { inCIMode, objFilter, objMap } from '@hyperlane-xyz/utils';
+import { writeYaml } from '@hyperlane-xyz/utils/fs';
 
 import { Contexts } from '../config/contexts.js';
 import { core as coreConfig } from '../config/environments/mainnet3/core.js';
@@ -42,7 +43,6 @@ import {
 import { DEPLOYERS } from '../src/governance.js';
 import { Role } from '../src/roles.js';
 import { impersonateAccount, useLocalProvider } from '../src/utils/fork.js';
-import { writeYamlAtPath } from '../src/utils/utils.js';
 
 import {
   Modules,
@@ -285,8 +285,8 @@ async function main() {
     const confirmConfig =
       chains && chains.length > 0
         ? objFilter(config, (chain, _): _ is unknown =>
-          (chains ?? []).includes(chain),
-        )
+            (chains ?? []).includes(chain),
+          )
         : config;
 
     // Have to print plan per chain because full plan is too big
@@ -300,7 +300,7 @@ async function main() {
         deploymentPlansDir,
         `${chain}.yaml`,
       );
-      writeYamlAtPath(chainDeployPlanPath, config);
+      writeYaml(chainDeployPlanPath, config);
       console.log(
         `Deployment Plan for ${chain} written to ${chainDeployPlanPath}`,
       );

@@ -1,5 +1,90 @@
 # @hyperlane-xyz/http-registry-server
 
+## 20.1.0
+
+### Patch Changes
+
+- Updated dependencies [11fa887]
+  - @hyperlane-xyz/sdk@20.1.0
+  - @hyperlane-xyz/utils@20.1.0
+
+## 20.0.0
+
+### Patch Changes
+
+- Updated dependencies [b3ebc08]
+- Updated dependencies [a7dc73d]
+  - @hyperlane-xyz/utils@20.0.0
+  - @hyperlane-xyz/sdk@20.0.0
+
+## 19.13.0
+
+### Patch Changes
+
+- Updated dependencies [3592f258a]
+  - @hyperlane-xyz/sdk@19.13.0
+  - @hyperlane-xyz/utils@19.13.0
+
+## 19.12.0
+
+### Patch Changes
+
+- Updated dependencies [38a1165c8]
+- Updated dependencies [08cf7eca9]
+- Updated dependencies [af2cd1729]
+- Updated dependencies [618615dc4]
+- Updated dependencies [e37100e2e]
+- Updated dependencies [08cf7eca9]
+  - @hyperlane-xyz/sdk@19.12.0
+  - @hyperlane-xyz/utils@19.12.0
+
+## 19.11.0
+
+### Patch Changes
+
+- Updated dependencies [156a37d6e]
+- Updated dependencies [4c29cd341]
+  - @hyperlane-xyz/sdk@19.11.0
+  - @hyperlane-xyz/utils@19.11.0
+
+## 19.10.0
+
+### Patch Changes
+
+- Updated dependencies [aad2988c9]
+- Updated dependencies [b2a693ac6]
+- Updated dependencies [c2a64e8c5]
+- Updated dependencies [c0583af62]
+- Updated dependencies [9770b732c]
+- Updated dependencies [a97a9939c]
+- Updated dependencies [66bed7126]
+- Updated dependencies [43ecd628c]
+- Updated dependencies [f604423b9]
+  - @hyperlane-xyz/utils@19.10.0
+  - @hyperlane-xyz/sdk@19.10.0
+
+## 19.9.0
+
+### Patch Changes
+
+- Updated dependencies [8c027d852]
+- Updated dependencies [8c027d852]
+  - @hyperlane-xyz/utils@19.9.0
+  - @hyperlane-xyz/sdk@19.9.0
+
+## 19.8.0
+
+### Patch Changes
+
+- Updated dependencies [500d81246]
+- Updated dependencies [4614a503e]
+- Updated dependencies [2ed21c97d]
+- Updated dependencies [78ff6cd47]
+- Updated dependencies [00b014a3e]
+- Updated dependencies [3f75ad86d]
+  - @hyperlane-xyz/sdk@19.8.0
+  - @hyperlane-xyz/utils@19.8.0
+
 ## 19.7.0
 
 ### Patch Changes

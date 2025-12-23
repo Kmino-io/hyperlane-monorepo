@@ -1,8 +1,8 @@
 import { expect } from 'chai';
 import { $ } from 'zx';
 
+import { ProtocolType } from '@hyperlane-xyz/provider-sdk';
 import { randomCosmosAddress } from '@hyperlane-xyz/sdk';
-import { ProtocolType } from '@hyperlane-xyz/utils';
 
 import { writeYamlOrJson } from '../../../utils/files.js';
 import { HyperlaneE2ECoreTestCommands } from '../../commands/core.js';
@@ -32,7 +32,7 @@ describe('hyperlane cosmosnative core check e2e tests', async function () {
 
   it('should throw an error if the --chain param is not provided', async () => {
     const wrongCommand =
-      $`yarn workspace @hyperlane-xyz/cli run hyperlane core check \
+      $`pnpm --filter @hyperlane-xyz/cli run hyperlane core check \
               --registry ${REGISTRY_PATH} \
               --config ${CORE_CONFIG_PATH} \
               --verbosity debug \

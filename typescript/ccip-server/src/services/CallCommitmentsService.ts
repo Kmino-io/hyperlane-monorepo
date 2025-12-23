@@ -1,4 +1,4 @@
-import type { TransactionReceipt } from '@ethersproject/providers';
+import type { Log, TransactionReceipt } from '@ethersproject/providers';
 import { Request, Response, Router } from 'express';
 import { Logger } from 'pino';
 import { z } from 'zod';
@@ -25,7 +25,10 @@ import {
 
 import { prisma } from '../db.js';
 import { createAbiHandler } from '../utils/abiHandler.js';
-import { PrometheusMetrics } from '../utils/prometheus.js';
+import {
+  PrometheusMetrics,
+  UnhandledErrorReason,
+} from '../utils/prometheus.js';
 
 import {
   BaseService,
@@ -129,13 +132,17 @@ export class CallCommitmentsService extends BaseService {
         {
           commitmentDispatchTx: data.commitmentDispatchTx,
           originDomain: data.originDomain,
-          revealMessageId,
+          messageId: revealMessageId,
           error: error.message,
           stack: error.stack,
+          error_reason: UnhandledErrorReason.CALL_COMMITMENTS_DATABASE_ERROR,
         },
         'Database error during commitment processing',
       );
-      PrometheusMetrics.logUnhandledError(this.config.serviceName);
+      PrometheusMetrics.logUnhandledError(
+        this.config.serviceName,
+        UnhandledErrorReason.CALL_COMMITMENTS_DATABASE_ERROR,
+      );
       return res.status(500).json({ error: 'Internal server error' });
     }
 
@@ -226,7 +233,7 @@ export class CallCommitmentsService extends BaseService {
 
     // Find the index of the CommitRevealDispatched log with the given commitment
     const revealIndex = receipt.logs.findIndex(
-      (log) =>
+      (log: Log) =>
         log.topics[0] === revealDispatchedTopic &&
         iface.parseLog(log).args.commitment === commitment,
     );
@@ -241,7 +248,7 @@ export class CallCommitmentsService extends BaseService {
     // Find the next two DispatchId logs after the CommitRevealDispatched
     const dispatchLogsAfterReveal = receipt.logs
       .slice(revealIndex + 1)
-      .filter((log) => log.topics[0] === dispatchIdTopic);
+      .filter((log: Log) => log.topics[0] === dispatchIdTopic);
 
     if (dispatchLogsAfterReveal.length < 2) {
       logger.warn(
@@ -425,7 +432,7 @@ export class CallCommitmentsService extends BaseService {
   ): Promise<string> {
     const iface = InterchainAccountRouter__factory.createInterface();
     const callTopic = iface.getEventTopic('RemoteCallDispatched');
-    const callLog = receipt.logs.find((l) => l.topics[0] === callTopic);
+    const callLog = receipt.logs.find((l: Log) => l.topics[0] === callTopic);
     if (!callLog) {
       logger.warn(
         {

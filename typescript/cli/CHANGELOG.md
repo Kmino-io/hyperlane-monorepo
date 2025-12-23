@@ -1,5 +1,67 @@
 # @hyperlane-xyz/cli
 
+## 20.1.0
+
+### Minor Changes
+
+- 11fa887: Upgrade TypeScript from 5.3.3 to 5.8.3 and compilation target to ES2023
+
+  - Upgraded TypeScript from 5.3.3 to 5.8.3 across all packages
+  - Updated compilation target from ES2022 to ES2023 (Node 16+ fully supported)
+  - Converted internal const enums to 'as const' pattern for better compatibility
+  - Updated @types/node from ^18.14.5 to ^20.17.0 for TypeScript 5.7+ compatibility
+  - Fixed JSON imports to use required 'with { type: "json" }' attribute (TS 5.7+ requirement)
+  - No breaking changes to public API - all changes are internal or non-breaking
+
+## 20.0.0
+
+### Minor Changes
+
+- b12fe7e: Update `hyperlane submit` to use a sequential `for` loop instead of `promiseObjAll` to prevent API rate limiting, Output transaction receipts as unique JSON files per chain with timestamped filenames.
+- aeac943: Refactor AltVMJsonRpcTxSubmitter to implement ITransactionSubmitter. Remove ALT_VM_SUPPORTED_PROTOCOLS, createAltVMSubmitterFactories in favor of simplified getSubmitterByStrategy
+
+## 19.13.0
+
+### Minor Changes
+
+- ae8ef4389: Fixed bug in `core deploy` which allowed to deploy unverified and possibly invalid configs due to missing validation using zod
+
+## 19.12.0
+
+### Minor Changes
+
+- 38a1165c8: - Update CLI context `altVmSigners` to be a `ChainMap` instead of `AltVMSignerFactory`,
+  - Update CLI context `altVmProviders` to be a `ChainMap` instead of `AltVMSignerFactory`.
+  - Update all existing getter methods to use `mustTry`, instead of `assert`.
+  - Delete `AltVMSupportedProtocols` and `AltVMProviderFactory`.
+  - Move functions from `AltVMSignerFactory` to top-level functions.
+  - Add `getMinGas` to Aleo, Cosmos and Radix ProtocolProvider.
+
+### Patch Changes
+
+- 1133c7a3f: Migrate filesystem utilities to use `@hyperlane-xyz/utils/fs` submodule, reducing code duplication.
+
+## 19.11.0
+
+## 19.10.0
+
+### Minor Changes
+
+- b3d7e8373: Remove MultiChainResolver for simplified chainResolver module
+- 66bed7126: migrated AltVm modules to provider-sdk and deploy-sdk
+- f604423b9: - Remove AltVMProviderFactory to new API in deploy-sdk (loadlProtocolProviders) and Registry singleton.
+  - Add `chainId` and `rpcUrls` to `ChainMetadataForAltVM`. Add `CosmosNativeProtocolProvider` and `RadixProtocolProvider` to both cosmos-sdk and radix-sdk, respectively.
+  - Add `forWarpRead`, `forCoreRead`, and `forCoreCheck` to signerMiddleware to enable chain resolving for these CLI functions.
+  - Add `assert` after some `altVmProvider.get` calls in SDK configUtils.
+
+## 19.9.0
+
+## 19.8.0
+
+### Minor Changes
+
+- 78ff6cd47: add new methods for altvm interface
+
 ## 19.7.0
 
 ### Minor Changes

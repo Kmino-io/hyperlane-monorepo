@@ -1,0 +1,47 @@
+{
+  "name": "@hyperlane-xyz/deploy-sdk",
+  "version": "0.7.0",
+  "description": "Deployer SDK for the Hyperlane Protocol",
+  "repository": "https://github.com/hyperlane-xyz/hyperlane-monorepo",
+  "license": "Apache-2.0",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "check": "tsc --noEmit",
+    "dev": "tsc --watch",
+    "lint": "eslint",
+    "clean": "rm -rf ./dist",
+    "prettier": "prettier --write .",
+    "test": "mocha --config .mocharc.json './src/**/*.test.ts' --exit"
+  },
+  "dependencies": {
+    "@hyperlane-xyz/cosmos-sdk": "workspace:*",
+    "@hyperlane-xyz/provider-sdk": "workspace:*",
+    "@hyperlane-xyz/radix-sdk": "workspace:*",
+    "@hyperlane-xyz/utils": "workspace:*",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@hyperlane-xyz/eslint-config": "workspace:^",
+    "@hyperlane-xyz/tsconfig": "workspace:^",
+    "@types/chai-as-promised": "catalog:",
+    "@types/mocha": "catalog:",
+    "@types/node": "catalog:",
+    "@types/sinon": "catalog:",
+    "@types/sinon-chai": "catalog:",
+    "chai": "catalog:",
+    "chai-as-promised": "catalog:",
+    "eslint": "catalog:",
+    "mocha": "catalog:",
+    "sinon": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:"
+  }
+}

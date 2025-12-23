@@ -46,6 +46,17 @@ export const defaultMultisigConfigs: ChainMap<MultisigConfig> = {
     ],
   },
 
+  adichain: {
+    threshold: 2,
+    validators: [
+      {
+        address: '0x4b11a6310bc06300b529b0397683ca3376407eca',
+        alias: AW_VALIDATOR_ALIAS,
+      },
+      DEFAULT_MITOSIS_VALIDATOR,
+    ],
+  },
+
   ancient8: {
     threshold: 2,
     validators: [
@@ -1128,6 +1139,17 @@ export const defaultMultisigConfigs: ChainMap<MultisigConfig> = {
     ],
   },
 
+  lazai: {
+    threshold: 2,
+    validators: [
+      {
+        address: '0x3b00fe3518e739bb978b04d28e1492d8d865d96e',
+        alias: AW_VALIDATOR_ALIAS,
+      },
+      DEFAULT_MITOSIS_VALIDATOR,
+    ],
+  },
+
   linea: {
     threshold: 4,
     validators: [
@@ -1279,6 +1301,17 @@ export const defaultMultisigConfigs: ChainMap<MultisigConfig> = {
         alias: AW_VALIDATOR_ALIAS,
       },
       DEFAULT_MERKLY_VALIDATOR,
+      DEFAULT_MITOSIS_VALIDATOR,
+    ],
+  },
+
+  megaeth: {
+    threshold: 2,
+    validators: [
+      {
+        address: '0x051ddac8ecf4bae2532b8b7caa626b5567dab528',
+        alias: AW_VALIDATOR_ALIAS,
+      },
       DEFAULT_MITOSIS_VALIDATOR,
     ],
   },
@@ -2038,6 +2071,17 @@ export const defaultMultisigConfigs: ChainMap<MultisigConfig> = {
     ],
   },
 
+  somnia: {
+    threshold: 2,
+    validators: [
+      {
+        address: '0xf484907083d32fdc0848bfb998dfdde835e6f9cb',
+        alias: AW_VALIDATOR_ALIAS,
+      },
+      DEFAULT_MITOSIS_VALIDATOR,
+    ],
+  },
+
   somniatestnet: {
     threshold: 1,
     validators: [
@@ -2139,6 +2183,17 @@ export const defaultMultisigConfigs: ChainMap<MultisigConfig> = {
         alias: AW_VALIDATOR_ALIAS,
       },
       DEFAULT_MERKLY_VALIDATOR,
+      DEFAULT_MITOSIS_VALIDATOR,
+    ],
+  },
+
+  stable: {
+    threshold: 2,
+    validators: [
+      {
+        address: '0x21820baebcd972c769e490415cfee43a894f3c18',
+        alias: AW_VALIDATOR_ALIAS,
+      },
       DEFAULT_MITOSIS_VALIDATOR,
     ],
   },
@@ -2566,6 +2621,24 @@ export const defaultMultisigConfigs: ChainMap<MultisigConfig> = {
       },
       DEFAULT_MERKLY_VALIDATOR,
       DEFAULT_MITOSIS_VALIDATOR,
+    ],
+  },
+  aleo: {
+    threshold: 1,
+    validators: [
+      {
+        address: '0xb9e79db67d02db0f79726c1aa499cc4d26b084fa',
+        alias: AW_VALIDATOR_ALIAS,
+      },
+    ],
+  },
+  aleotestnet: {
+    threshold: 1,
+    validators: [
+      {
+        address: '0x7233d80194c69af6b84b0786a7fd2a7294396ca8',
+        alias: AW_VALIDATOR_ALIAS,
+      },
     ],
   },
 };

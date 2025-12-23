@@ -1,7 +1,5 @@
 {
   "extensions": ["ts"],
-  "node-option": [
-    "experimental-specifier-resolution=node",
-    "loader=ts-node/esm"
-  ]
+  "file": ["src/tests/cosmosnative/e2e-test.setup.ts"],
+  "node-option": ["import=tsx/esm"]
 }

@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
+set -e
 
 function cleanup() {
   docker compose down
 }
+
+# Ensure cleanup runs even on error
+trap cleanup EXIT
 
 cleanup
 
@@ -15,8 +19,6 @@ if [[ $? -ne 0 ]]; then
 fi
 
 echo "Running E2E tests"
-yarn mocha --config .mocharc-e2e.json
-
-cleanup
+pnpm mocha --config .mocharc-e2e.json
 
 echo "Completed E2E tests"

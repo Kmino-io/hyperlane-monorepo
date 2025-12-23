@@ -30,7 +30,7 @@ To read more about interchain applications, how the protocol works, and how to i
 
 #### Install `jq`
 
-You need `jq` installed on your machine. You can download it from [official page](https://jqlang.github.io/jq/download/) or use a package manager of your choice.
+You need `jq` installed on your machine. You can download it from [official page](https://jqlang.org/download/) or use a package manager of your choice.
 
 #### Install `gitleaks`
 
@@ -46,13 +46,13 @@ Run the following to install `foundryup`:
 curl -L https://foundry.paradigm.xyz | bash
 ```
 
-Then run `foundryup` to install `forge`, `cast`, `anvil` and `chisel`.
+Then run `foundryup` with the pinned version to install `forge`, `cast`, `anvil` and `chisel`.
 
 ```bash
-foundryup
+foundryup --install $(cat solidity/.foundryrc)
 ```
 
-Check out the [Foundry Book](https://book.getfoundry.sh/getting-started/installation) for more information.
+Check out the [Foundry Book](https://getfoundry.sh/introduction/installation/) for more information.
 
 #### Node
 
@@ -75,18 +75,18 @@ You should change versions automatically with the `.nvmrc` file.
 
 ### Workspaces
 
-This monorepo uses [Yarn Workspaces](https://yarnpkg.com/features/workspaces). Installing dependencies, building, testing, and running prettier for all packages can be done from the root directory of the repository.
+This monorepo uses [pnpm workspaces](https://pnpm.io/workspaces). Installing dependencies, building, testing, and running prettier for all packages can be done from the root directory of the repository.
 
 - Installing dependencies
 
   ```bash
-  yarn install
+  pnpm install
   ```
 
 - Building
 
   ```bash
-  yarn build
+  pnpm build
   ```
 
 If you are using [VSCode](https://code.visualstudio.com/), you can launch the [multi-root workspace](https://code.visualstudio.com/docs/editor/multi-root-workspaces) with `code mono.code-workspace`, install the recommended workspace extensions, and use the editor settings.

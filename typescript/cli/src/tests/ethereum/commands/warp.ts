@@ -14,10 +14,7 @@ import {
 import { Address, ProtocolType, randomInt } from '@hyperlane-xyz/utils';
 
 import { readChainSubmissionStrategyConfig } from '../../../config/strategy.js';
-import {
-  AltVMProviderFactory,
-  AltVMSignerFactory,
-} from '../../../context/altvm.js';
+import { createAltVMSigners } from '../../../context/altvm.js';
 import { getContext } from '../../../context/context.js';
 import { CommandContext } from '../../../context/types.js';
 import { extendWarpRoute as extendWarpRouteWithoutApplyTransactions } from '../../../deploy/warp.js';
@@ -425,7 +422,7 @@ export function generateWarpConfigs(
   chain1Config: GetWarpTokenConfigOptions,
   chain2Config: GetWarpTokenConfigOptions,
 ): ReadonlyArray<WarpRouteDeployConfig> {
-  const ignoreTokenTypes = new Set([
+  const ignoreTokenTypes: Set<TokenType> = new Set([
     TokenType.XERC20,
     TokenType.XERC20Lockbox,
     TokenType.collateralFiat,
@@ -623,9 +620,7 @@ export async function setupIncompleteWarpRouteExtension(
     ? await readChainSubmissionStrategyConfig(context.strategyPath)
     : {};
 
-  context.altVmProvider = new AltVMProviderFactory(context.multiProvider);
-
-  const altVmSigner = await AltVMSignerFactory.createSigners(
+  const altVmSigners = await createAltVMSigners(
     context.multiProvider,
     [],
     {},
@@ -640,7 +635,7 @@ export async function setupIncompleteWarpRouteExtension(
         key: {
           [ProtocolType.Ethereum]: ANVIL_KEY,
         },
-        altVmSigner,
+        altVmSigners,
       },
       warpCoreConfig,
       warpDeployConfig,

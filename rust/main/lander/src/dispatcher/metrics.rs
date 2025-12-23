@@ -53,6 +53,9 @@ pub struct DispatcherMetrics {
     finalized_nonce: IntGaugeVec,
     /// Upper nonce, namely the nonce which can be used next for each destination
     upper_nonce: IntGaugeVec,
+    /// Counts how many times we've noticed the nonce in tx is different from nonce
+    /// stored in db
+    mismatched_nonce: IntGaugeVec,
     /// Gas limit set for the transaction, if applicable
     pub gas_limit: IntGaugeVec,
 }
@@ -187,6 +190,14 @@ impl DispatcherMetrics {
             &["destination", "signer",],
             registry.clone()
         )?;
+        let mismatched_nonce = register_int_gauge_vec_with_registry!(
+            opts!(
+                namespaced("mismatched_nonce"),
+                "Count how many times nonce mismatch between tx and db",
+            ),
+            &["destination", "signer",],
+            registry.clone()
+        )?;
         Ok(Self {
             registry: registry.clone(),
             task_liveness,
@@ -204,6 +215,7 @@ impl DispatcherMetrics {
             priority_fee,
             finalized_nonce,
             upper_nonce,
+            mismatched_nonce,
             gas_limit,
         })
     }
@@ -299,6 +311,12 @@ impl DispatcherMetrics {
         self.batched_transactions.clone()
     }
 
+    pub fn get_mismatched_nonce(&self, destination: &str, signer: &str) -> IntGauge {
+        self.mismatched_nonce
+            .with_label_values(&[destination, signer])
+            .clone()
+    }
+
     pub fn set_post_inclusion_metrics(
         &self,
         vm_metrics: &PostInclusionMetricsSource,
@@ -323,11 +341,12 @@ impl DispatcherMetrics {
         Ok(out_buf)
     }
 
-    #[cfg(test)]
+    /// Create a dummy instance for testing purposes
+    #[cfg(any(test, feature = "integration_test"))]
     pub fn dummy_instance() -> Self {
         let registry = Registry::new();
         let instance = Self::new(registry.clone());
-        instance.unwrap()
+        instance.expect("Failed to create dummy metrics instance for testing")
     }
 }
 
